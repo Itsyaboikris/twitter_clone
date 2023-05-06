@@ -3,14 +3,16 @@ import { useRecoilState } from 'recoil'
 import { modalState, postIdState } from "../atoms/modalAtom"
 import Modal  from 'react-modal'
 import { FaceSmileIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { doc, onSnapshot } from 'firebase/firestore'
+import { addDoc, collection, doc, onSnapshot, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/firebase'
 import Moment from 'react-moment'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/router'
 
 export default function CommentModal() {
 
 	const {data: session} = useSession()
+	const router = useRouter()
 
 	const [open, setOpen] = useRecoilState(modalState)
 	const [postId, setPostId] = useRecoilState(postIdState)
@@ -26,6 +28,17 @@ export default function CommentModal() {
 	}, [postId])
 
 	const sendComment = async () => {
+		await addDoc(collection(db, "posts", postId, "comments"), {
+			comment: input,
+			name: session.user.name,
+			username: session.user.username,
+			userImg: session.user.image,
+			timestamp: serverTimestamp()
+		})
+
+		setInput("")
+		setOpen(false)
+		router.push(`/posts/${postId}`)
 	}
 
 	return (

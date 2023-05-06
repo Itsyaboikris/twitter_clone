@@ -16,8 +16,15 @@ export default function Post({post}) {
 	const [open, setOpen] = useRecoilState(modalState)
 	const [postId, setPostId] = useRecoilState(postIdState)
 	
+	const [comments, setComments] = useState([])
 	const [likes, setLikes] = useState([])
 	const [hasLiked, setHasLiked] = useState(false)
+
+	useEffect(() => {
+        const unsubscribe = onSnapshot(
+			collection(db, "posts", post.id, "comments"), (snapshot) => setComments(snapshot.docs)
+		)
+	},[comments])
 
 	useEffect(() => {
         const unsubscribe = onSnapshot(
@@ -68,7 +75,7 @@ export default function Post({post}) {
 
 			<img className='h-11 w-11 rounded-full mr-4' src={post.data().userImg} alt="user-image"/>
 			
-			<div className=''>
+			<div className='flex-1'>
 
 				<div className='flex items-center justify-between'>
 					<div className='flex space-x-1 whitespace-nowrap items-center'>
@@ -76,7 +83,7 @@ export default function Post({post}) {
 						<span className='text-sm sm:text-[15px]'>@{post.data().username} - </span>
 						<span className='text-sm sm:text-[15px] hover:underline'>
 							<Moment fromNow>
-								{post.data().timestamp.toDate()}
+								{post?.data()?.timestamp?.toDate()}
 							</Moment>	
 						</span>
 					</div>
@@ -88,7 +95,14 @@ export default function Post({post}) {
 				<img className='rounded-2xl mr-2' src={post.data().image} alt="" />
 
 				<div className='flex justify-between text-gray-500 p-2'>
-					<ChatBubbleOvalLeftIcon className='h-9 w-9 hoverEffect p-2 hover:text-sky-500 hover:bg-sky-100' onClick={makeComment}/>
+					<div className='flex items-center'>
+						<ChatBubbleOvalLeftIcon className='h-9 w-9 hoverEffect p-2 hover:text-sky-500 hover:bg-sky-100' onClick={makeComment}/>
+						{
+							comments.length > 0 && (
+								<span className={`text-sm select-none`}>{comments.length}</span>
+							)
+						}
+					</div>
 					{
 						session?.user.uid === post.data().id && (
 							<TrashIcon className='h-9 w-9 hoverEffect p-2 hover:text-red-600 hover:bg-red-100' onClick={deletePost} />
