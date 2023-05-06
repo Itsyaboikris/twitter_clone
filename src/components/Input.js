@@ -71,7 +71,7 @@ export default function Input() {
 						{
 							selectedFile && (
 								<div className='relative'>
-									<XMarkIcon className='h-7 text-black absolute cursor-pointer shadow-md shadow-white rounded-full' onClick={() => setSelectedFile(null)} />
+									<XMarkIcon className='h-7 text-black absolute cursor-pointer shadow-md border-white m-1 rounded-full border' onClick={() => setSelectedFile(null)} />
 									<img src={selectedFile} alt="" className={`${loading && "animate-pulse"}`} />
 								</div>
 							)

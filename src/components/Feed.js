@@ -1,40 +1,22 @@
 import { SparklesIcon } from '@heroicons/react/24/outline'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Input from './Input'
-import { faker } from '@faker-js/faker';
 import Post from './Post';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { db } from '@/firebase';
 
 export default function Feed() {
 
-	const posts =[
-		{
-			id: 1,
-			name: faker.name.fullName(),
-			username: faker.internet.userName(),
-			userImg: faker.image.avatar(),
-			img: faker.image.nightlife(),
-			text: faker.random.words(5) ,
-			timestamp: "2 hours ago"
-		},
-		{
-			id: 2,
-			name: faker.name.fullName(),
-			username: faker.internet.userName(),
-			userImg: faker.image.avatar(),
-			img: faker.image.nature(),
-			text: faker.random.words(5) ,
-			timestamp: "4 hours ago"
-		},
-		{
-			id: 3,
-			name: faker.name.fullName(),
-			username: faker.internet.userName(),
-			userImg: faker.image.avatar(),
-			img: faker.image.fashion(),
-			text: faker.random.words(5) ,
-			timestamp: "3 hours ago"
-		}
-	]
+	const [posts, setPosts] = useState([])
+
+	useEffect(() => 
+		onSnapshot(
+			query(collection(db, "posts"), orderBy("timestamp", "desc")),
+			(snapshot) => {
+			  setPosts(snapshot.docs);
+			}
+		  ),	
+	[])
 
 	return (
 		<div className='xl:ml-[370px] border-l border-r border-gray-200 xl:min-w-[576px] sm:ml-[73px] flex-grow max-w-xl'>
@@ -50,7 +32,7 @@ export default function Feed() {
 
             {
 				posts.map((post) => (
-                    <Post key={post.id} post={post}/>
+                    <Post key={post.data().id} post={post}/>
 				))
 			}
 		</div>
