@@ -5,12 +5,14 @@ import { EllipsisHorizontalIcon, HeartIcon as HeartIconFill } from '@heroicons/r
 import { collection, deleteDoc, doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { deleteObject, ref } from 'firebase/storage'
 import { signIn, useSession } from 'next-auth/react'
+import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import Moment from 'react-moment'
 import { useRecoilState } from 'recoil'
 
-export default function Post({post}) {
+export default function Post({post, id}) {
 
+	const router = useRouter()
 	const {data: session} = useSession()
 
 	const [open, setOpen] = useRecoilState(modalState)
@@ -22,13 +24,13 @@ export default function Post({post}) {
 
 	useEffect(() => {
         const unsubscribe = onSnapshot(
-			collection(db, "posts", post.id, "comments"), (snapshot) => setComments(snapshot.docs)
+			collection(db, "posts", id, "comments"), (snapshot) => setComments(snapshot.docs)
 		)
 	},[comments])
 
 	useEffect(() => {
         const unsubscribe = onSnapshot(
-			collection(db, "posts", post.id, "likes"), (snapshot) => setLikes(snapshot.docs)
+			collection(db, "posts", id, "likes"), (snapshot) => setLikes(snapshot.docs)
 		)
 	},[])
 
@@ -39,9 +41,9 @@ export default function Post({post}) {
 	const likePost = async() => {
 		if (session) {
 			if(hasLiked) {
-				await deleteDoc(doc(db, "posts", post.id, "likes", session?.user.uid))
+				await deleteDoc(doc(db, "posts", id, "likes", session?.user.uid))
 			} else {
-				await setDoc(doc(db, "posts", post.id, "likes", session?.user.uid), {
+				await setDoc(doc(db, "posts", id, "likes", session?.user.uid), {
 					username: session.user.username
 				})
 			}
@@ -53,8 +55,9 @@ export default function Post({post}) {
 	const deletePost = async() => {
 		if (session) {
 			if(window.confirm("Are you sure you want to delete")) {
-				await deleteDoc(doc(db, "posts", post.id))
-				await deleteObject(ref(storage, `posts/${post.id}/image`))
+				await deleteDoc(doc(db, "posts", id))
+				await deleteObject(ref(storage, `posts/${id}/image`))
+				router.push('/')
 			}
         } else {
             signIn()
@@ -63,7 +66,7 @@ export default function Post({post}) {
 
 	const makeComment = async() => {
 		if (session) {
-			setPostId(post.id);
+			setPostId(id);
 			setOpen(!open);
         } else {
             signIn()
@@ -73,14 +76,14 @@ export default function Post({post}) {
 	return (
 		<div className='flex p-3 cursor-pointer border-b border-gray-200'>
 
-			<img className='h-11 w-11 rounded-full mr-4' src={post.data().userImg} alt="user-image"/>
+			<img className='h-11 w-11 rounded-full mr-4' src={post?.data()?.userImg} alt="user-image"/>
 			
 			<div className='flex-1'>
 
 				<div className='flex items-center justify-between'>
 					<div className='flex space-x-1 whitespace-nowrap items-center'>
-						<h4 className='font-bold text-[15px] sm:text-[16px] hover:underline'>{post.data().name}</h4>
-						<span className='text-sm sm:text-[15px]'>@{post.data().username} - </span>
+						<h4 className='font-bold text-[15px] sm:text-[16px] hover:underline'>{post?.data()?.name}</h4>
+						<span className='text-sm sm:text-[15px]'>@{post?.data()?.username} - </span>
 						<span className='text-sm sm:text-[15px] hover:underline'>
 							<Moment fromNow>
 								{post?.data()?.timestamp?.toDate()}
@@ -90,9 +93,9 @@ export default function Post({post}) {
 					<EllipsisHorizontalIcon className='h-10 hoverEffect w-10 hover:bg-sky-100 hover:text-sky-500 p-2'/>
 				</div>
 
-				<p className='text-gray-800 text-[15px] sm:text-[16px] mb-2'>{post.data().text}</p>
+				<p className='text-gray-800 text-[15px] sm:text-[16px] mb-2'>{post?.data()?.text}</p>
 
-				<img className='rounded-2xl mr-2' src={post.data().image} alt="" />
+				<img className='rounded-2xl mr-2' src={post?.data()?.image} alt="" />
 
 				<div className='flex justify-between text-gray-500 p-2'>
 					<div className='flex items-center'>
@@ -104,7 +107,7 @@ export default function Post({post}) {
 						}
 					</div>
 					{
-						session?.user.uid === post.data().id && (
+						session?.user.uid === post?.data()?.id && (
 							<TrashIcon className='h-9 w-9 hoverEffect p-2 hover:text-red-600 hover:bg-red-100' onClick={deletePost} />
 						)
 					}
