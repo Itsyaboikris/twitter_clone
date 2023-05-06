@@ -5,8 +5,9 @@ import Post from '@/components/Post'
 import { useRouter } from 'next/router'
 import { ArrowLeftIcon } from '@heroicons/react/24/outline'
 import { useEffect, useState } from 'react'
-import { doc, onSnapshot } from 'firebase/firestore'
+import { collection, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { db } from '@/firebase'
+import Comment from '@/components/Comment'
 
 
 export default function PostPage({newsResults, randomUsersResults}) {
@@ -14,10 +15,17 @@ export default function PostPage({newsResults, randomUsersResults}) {
 	const router = useRouter();
 	const {id} = router.query;
 	const [post, setPost] = useState(null)
+	const [comment, setComment] = useState([])
 
 	useEffect(()=>
 		onSnapshot(doc(db, "posts", id), (snapshot) => setPost(snapshot))
 	,[id])
+
+	useEffect(() => {
+		onSnapshot(query(collection(db,"posts", id, "comments"), orderBy("timestamp","desc")),(snapshot) => setComment(snapshot.docs))
+	}, [id])
+
+	console.log(comment)
 	
 	return (
 		<main className='flex min-h-screen mx-auto'>
@@ -32,6 +40,18 @@ export default function PostPage({newsResults, randomUsersResults}) {
 			</div>
             
 			<Post id={id} post={post}/>
+
+			{
+				comment.length > 0 && (
+					<div className=''>
+						{
+							comment.map((com)=> (
+								<Comment key={com?.id} id={com?.id} comment={com?.data()} />
+							))
+						}
+					</div>
+				)
+			}
 		</div>
 			<Widgets newsResults={newsResults.articles} randomUsersResults={randomUsersResults?.results || null} />
 			<CommentModal/>
