@@ -1,3 +1,4 @@
+import { modalState } from '@/atoms/modalAtom'
 import { db, storage } from '@/firebase'
 import { ChartBarIcon, ChatBubbleOvalLeftIcon, HeartIcon, ShareIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { EllipsisHorizontalIcon, HeartIcon as HeartIconFill } from '@heroicons/react/24/solid'
@@ -6,10 +7,13 @@ import { deleteObject, ref } from 'firebase/storage'
 import { signIn, useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import Moment from 'react-moment'
+import { useRecoilState } from 'recoil'
 
 export default function Post({post}) {
 
 	const {data: session} = useSession()
+
+	const [open, setOpen] = useRecoilState(modalState)
 	
 	const [likes, setLikes] = useState([])
 	const [hasLiked, setHasLiked] = useState(false)
@@ -74,7 +78,7 @@ export default function Post({post}) {
 				<img className='rounded-2xl mr-2' src={post.data().image} alt="" />
 
 				<div className='flex justify-between text-gray-500 p-2'>
-					<ChatBubbleOvalLeftIcon className='h-9 w-9 hoverEffect p-2 hover:text-sky-500 hover:bg-sky-100' />
+					<ChatBubbleOvalLeftIcon className='h-9 w-9 hoverEffect p-2 hover:text-sky-500 hover:bg-sky-100' onClick={()=>setOpen(!open)}/>
 					{
 						session?.user.uid === post.data().id && (
 							<TrashIcon className='h-9 w-9 hoverEffect p-2 hover:text-red-600 hover:bg-red-100' onClick={deletePost} />
