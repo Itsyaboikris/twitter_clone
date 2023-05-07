@@ -33,7 +33,8 @@ export default function CommentModal() {
 			name: session.user.name,
 			username: session.user.username,
 			userImg: session.user.image,
-			timestamp: serverTimestamp()
+			timestamp: serverTimestamp(),
+			userId: session.user.uid,
 		})
 
 		setInput("")

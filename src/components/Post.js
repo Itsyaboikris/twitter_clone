@@ -93,9 +93,9 @@ export default function Post({post, id}) {
 					<EllipsisHorizontalIcon className='h-10 hoverEffect w-10 hover:bg-sky-100 hover:text-sky-500 p-2'/>
 				</div>
 
-				<p className='text-gray-800 text-[15px] sm:text-[16px] mb-2'>{post?.data()?.text}</p>
+				<p className='text-gray-800 text-[15px] sm:text-[16px] mb-2' onClick={()=>router.push(`/posts/${id}`)}>{post?.data()?.text}</p>
 
-				<img className='rounded-2xl mr-2' src={post?.data()?.image} alt="" />
+				<img className='rounded-2xl mr-2' src={post?.data()?.image} alt="" onClick={()=>router.push(`/posts/${id}`)} />
 
 				<div className='flex justify-between text-gray-500 p-2'>
 					<div className='flex items-center'>
