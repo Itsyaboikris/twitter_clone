@@ -6,14 +6,14 @@ import { FaceSmileIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline
 import { addDoc, collection, doc, onSnapshot, serverTimestamp } from 'firebase/firestore'
 import { db } from '@/firebase'
 import Moment from 'react-moment'
-import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
+import { userState } from '@/atoms/userAtom'
 
 export default function CommentModal() {
 
-	const {data: session} = useSession()
 	const router = useRouter()
 
+	const [currentUser, setCurrentUser] = useRecoilState(userState)
 	const [open, setOpen] = useRecoilState(modalState)
 	const [postId, setPostId] = useRecoilState(postIdState)
 
@@ -30,11 +30,11 @@ export default function CommentModal() {
 	const sendComment = async () => {
 		await addDoc(collection(db, "posts", postId, "comments"), {
 			comment: input,
-			name: session.user.name,
-			username: session.user.username,
-			userImg: session.user.image,
+			name: currentUser.name,
+			username: currentUser.username,
+			userImg: currentUser.userImg,
 			timestamp: serverTimestamp(),
-			userId: session.user.uid,
+			userId: currentUser.uid,
 		})
 
 		setInput("")
@@ -70,7 +70,7 @@ export default function CommentModal() {
 
 							{
 								<div className='flex p-3 space-x-3'>
-									<img className='h-11 w-11 rounded-full cursor-pointer hover:brightness-95' src={session.user.image} alt='user image' />
+									<img className='h-11 w-11 rounded-full cursor-pointer hover:brightness-95' src={currentUser.userImg} alt='user image' />
 
 									<div className='w-full divide-y divide-gray-200' >
 										<div className='' >

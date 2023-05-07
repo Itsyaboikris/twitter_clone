@@ -1,13 +1,17 @@
 import { FaceSmileIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore'
-import { useSession, signOut } from 'next-auth/react'
 import React, { useRef, useState } from 'react'
 import { db, storage } from '@/firebase'
 import { getDownloadURL, ref, uploadString } from 'firebase/storage'
+import { userState } from '../atoms/userAtom'
+import { useRecoilState } from 'recoil'
+import { signOut } from 'next-auth/react'
+import { getAuth } from 'firebase/auth'
 
 export default function Input() {
 
-	const {data: session} = useSession()
+	const auth = getAuth()
+	const [currentUser, setCurrentUser] = useRecoilState(userState)
 
 	const filePickerRef = useRef(null)
 
@@ -21,12 +25,12 @@ export default function Input() {
 		setLoading(true)
 
 		const docRef = await addDoc(collection(db, "posts"),{
-			id: session.user.uid,
+			id: currentUser.uid,
 			text: input,
-			userImg: session.user.image,
+			userImg: currentUser.userImg,
 			timestamp: serverTimestamp(),
-			name: session.user.name,
-			username: session.user.username
+			name: currentUser.name,
+			username: currentUser.username
 		})
 
 		const imageRef = ref(storage, `posts/${docRef.id}/image`)
@@ -55,14 +59,18 @@ export default function Input() {
 		reader.onload = (readerEvent) => {
 			setSelectedFile(readerEvent.target.result);
 		}
-		
+	}
+
+	const onSignOut = async() => {
+		await signOut(auth)
+        setCurrentUser(null)
 	}
 	
 	return (
 		<>
 			{
-				session && <div className='flex border-b border-grey-200 p-3 space-x-3'>
-					<img className='h-11 w-11 rounded-full cursor-pointer hover:brightness-95' src={session.user.image} alt='user image' onClick={signOut} />
+				currentUser && <div className='flex border-b border-grey-200 p-3 space-x-3'>
+					<img className='h-11 w-11 rounded-full cursor-pointer hover:brightness-95' src={currentUser?.userImg} alt='user image' onClick={onSignOut} />
 
 					<div className='w-full divide-y divide-gray-200' >
 						<div className='' >

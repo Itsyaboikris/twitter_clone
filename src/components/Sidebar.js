@@ -1,13 +1,38 @@
 import Image from 'next/image'
-import React from 'react'
-import { useSession, signIn, signOut } from 'next-auth/react'
 import SidebarMenuItem from './SidebarMenuItem'
 import { HomeIcon } from '@heroicons/react/24/solid'
 import { BellIcon, BookmarkIcon, ClipboardIcon, EllipsisHorizontalCircleIcon, EllipsisHorizontalIcon, HashtagIcon, InboxIcon, UserIcon } from '@heroicons/react/24/outline'
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth'
+import { useEffect } from 'react'
+import { doc, getDoc } from 'firebase/firestore'
+import { useRecoilState } from 'recoil'
+import { userState } from '@/atoms/userAtom'
+import { db } from '@/firebase'
+import { useRouter } from 'next/router'
 
 export default function Sidebar() {
 
-	const {data: session} = useSession()
+	const auth = getAuth()
+	const router = useRouter()
+
+	const [currentUser, setCurrentUser] = useRecoilState(userState)
+
+	useEffect(()=>{
+		onAuthStateChanged(auth, async (user)=>{
+			if(user){
+				const docRef = doc(db, "users", auth.currentUser.providerData[0].uid)
+				const docSnap = await getDoc(docRef)
+				if(docSnap.exists()){
+					setCurrentUser(docSnap.data())
+				}
+			}
+		})
+	},[])
+
+	const onSignOut = async() => {
+		await signOut(auth)
+        setCurrentUser(null)
+	}
 
 	return (
 		<div className='hidden sm:flex flex-col p-2 xl:items-start fixed h-full xl:ml-24'>
@@ -21,7 +46,7 @@ export default function Sidebar() {
 				<SidebarMenuItem text="Explore" Icon={HashtagIcon} />
 
 				{
-					session && (
+					currentUser && (
 						<>
 							<SidebarMenuItem text="Notifications" Icon={BellIcon} />
 							<SidebarMenuItem text="Messages" Icon={InboxIcon} />
@@ -36,22 +61,22 @@ export default function Sidebar() {
 			</div>
 
 			{
-				session ? (
+				currentUser ? (
                     <>
 						<button className='bg-blue-400 text-white rounded-full w-56 h-12 font-bold shadow-md hover:brightness-95 text-lg hidden xl:inline'>Tweet</button>
 
 						<div className='hoverEffect text-gray-700 flex items-center justify-center xl:justify-start mt-auto'>
-							<img className='h-10 w-10 rounded-full xl:mr-2' src={session.user?.image} alt='User Image'onClick={signOut} />
+							<img className='h-10 w-10 rounded-full xl:mr-2' src={currentUser.userImg} alt='User Image' onClick={onSignOut}/>
 							<div className='leading-5 hidden xl:inline'>
-								<h4 className='font-bold '>{session.user?.name}</h4>
-								<p className='text-grey-500'>@{session.user?.username}</p>
+								<h4 className='font-bold '>{currentUser.name}</h4>
+								<p className='text-grey-500'>@{currentUser.username}</p>
 							</div>
 							<EllipsisHorizontalIcon className='h-5 xl:ml-8 hidden xl:inline'/>
 						</div>
                     </>
                 ) : (
 					<>
-						<button className='bg-blue-400 text-white rounded-full w-36 h-12 font-bold shadow-md hover:brightness-95 text-lg hidden xl:inline' onClick={signIn}>Sign In</button>
+						<button className='bg-blue-400 text-white rounded-full w-36 h-12 font-bold shadow-md hover:brightness-95 text-lg hidden xl:inline' onClick={()=>router.push("/auth/signin")}>Sign In</button>
 					</>
 				)
 			}

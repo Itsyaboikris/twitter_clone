@@ -1,10 +1,10 @@
 import { modalState, postIdState } from '@/atoms/modalAtom'
+import { userState } from '@/atoms/userAtom'
 import { db, storage } from '@/firebase'
 import { ChartBarIcon, ChatBubbleOvalLeftIcon, HeartIcon, ShareIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { EllipsisHorizontalIcon, HeartIcon as HeartIconFill } from '@heroicons/react/24/solid'
 import { collection, deleteDoc, doc, onSnapshot, setDoc } from 'firebase/firestore'
 import { deleteObject, ref } from 'firebase/storage'
-import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import Moment from 'react-moment'
@@ -13,10 +13,10 @@ import { useRecoilState } from 'recoil'
 export default function Post({post, id}) {
 
 	const router = useRouter()
-	const {data: session} = useSession()
 
 	const [open, setOpen] = useRecoilState(modalState)
 	const [postId, setPostId] = useRecoilState(postIdState)
+	const [currentUser, setCurrentUser] = useRecoilState(userState)
 	
 	const [comments, setComments] = useState([])
 	const [likes, setLikes] = useState([])
@@ -35,41 +35,41 @@ export default function Post({post, id}) {
 	},[])
 
 	useEffect(() => {
-		setHasLiked(likes.findIndex((like) => like.id === session?.user.uid) !== -1)
-	},[likes,session?.user.uid])
+		setHasLiked(likes.findIndex((like) => like.id === currentUser?.uid) !== -1)
+	},[likes,currentUser?.uid])
 
 	const likePost = async() => {
-		if (session) {
+		if (currentUser) {
 			if(hasLiked) {
-				await deleteDoc(doc(db, "posts", id, "likes", session?.user.uid))
+				await deleteDoc(doc(db, "posts", id, "likes", currentUser.uid))
 			} else {
-				await setDoc(doc(db, "posts", id, "likes", session?.user.uid), {
-					username: session.user.username
+				await setDoc(doc(db, "posts", id, "likes", currentUser.uid), {
+					username: currentUser.username
 				})
 			}
 		} else {
-			signIn()
+			router.push("/auth/signin")
 		}
 	}
 
 	const deletePost = async() => {
-		if (session) {
+		if (currentUser) {
 			if(window.confirm("Are you sure you want to delete")) {
 				await deleteDoc(doc(db, "posts", id))
 				await deleteObject(ref(storage, `posts/${id}/image`))
 				router.push('/')
 			}
         } else {
-            signIn()
+            router.push("/auth/signin")
         }
 	}
 
 	const makeComment = async() => {
-		if (session) {
+		if (currentUser) {
 			setPostId(id);
 			setOpen(!open);
         } else {
-            signIn()
+            router.push("/auth/signin")
         }
 	}
 
@@ -107,7 +107,7 @@ export default function Post({post, id}) {
 						}
 					</div>
 					{
-						session?.user.uid === post?.data()?.id && (
+						currentUser?.uid === post?.data()?.id && (
 							<TrashIcon className='h-9 w-9 hoverEffect p-2 hover:text-red-600 hover:bg-red-100' onClick={deletePost} />
 						)
 					}

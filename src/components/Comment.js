@@ -1,10 +1,9 @@
 import { modalState, postIdState } from '@/atoms/modalAtom'
-import { db, storage } from '@/firebase'
+import { userState } from '@/atoms/userAtom'
+import { db } from '@/firebase'
 import { ChartBarIcon, ChatBubbleOvalLeftIcon, HeartIcon, ShareIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { EllipsisHorizontalIcon, HeartIcon as HeartIconFill } from '@heroicons/react/24/solid'
 import { collection, deleteDoc, doc, onSnapshot, setDoc } from 'firebase/firestore'
-import { deleteObject, ref } from 'firebase/storage'
-import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import Moment from 'react-moment'
@@ -13,8 +12,8 @@ import { useRecoilState } from 'recoil'
 export default function Comment({comment, commentId, oPostId}) {
 
 	const router = useRouter()
-	const {data: session} = useSession()
 
+	const [currentUser, setCurrentUser] = useRecoilState(userState)
 	const [open, setOpen] = useRecoilState(modalState)
 	const [postId, setPostId] = useRecoilState(postIdState)
 	
@@ -29,39 +28,39 @@ export default function Comment({comment, commentId, oPostId}) {
 	},[oPostId, commentId])
 
 	useEffect(() => {
-		setHasLiked(likes.findIndex((like) => like.id === session?.user.uid) !== -1)
-	},[likes])
+		setHasLiked(likes.findIndex((like) => like.id === currentUser?.uid) !== -1)
+	},[likes, currentUser?.uid])
 
 	const likeComment = async() => {
-		if (session) {
+		if (currentUser) {
 			if(hasLiked) {
-				await deleteDoc(doc(db, "posts", oPostId, "comments", commentId, "likes", session?.user.uid))
+				await deleteDoc(doc(db, "posts", oPostId, "comments", commentId, "likes", currentUser?.uid))
 			} else {
-				await setDoc(doc(db, "posts", oPostId, "comments", commentId, "likes", session?.user.uid), {
-					username: session.user.username
+				await setDoc(doc(db, "posts", oPostId, "comments", commentId, "likes", currentUser?.uid), {
+					username: currentUser.username
 				})
 			}
 		} else {
-			signIn()
+			router.push("/auth/signin")
 		}
 	}
 
 	const deleteComment = async() => {
-		if (session) {
+		if (currentUser) {
 			if(window.confirm("Are you sure you want to delete")) {
 				await deleteDoc(doc(db, "posts", oPostId, "comments", commentId))
 			}
         } else {
-            signIn()
+            router.push("/auth/signin")
         }
 	}
 
 	const makeComment = async() => {
-		if (session) {
+		if (currentUser) {
 			setPostId(oPostId);
 			setOpen(!open);
         } else {
-            signIn()
+            router.push("/auth/signin")
         }
 	}
 
@@ -93,7 +92,7 @@ export default function Comment({comment, commentId, oPostId}) {
 						
 					</div>
 					{
-						session?.user.uid === comment?.userId && (
+						currentUser?.uid === comment?.userId && (
 							<TrashIcon className='h-9 w-9 hoverEffect p-2 hover:text-red-600 hover:bg-red-100' onClick={deleteComment} />
 						)
 					}
