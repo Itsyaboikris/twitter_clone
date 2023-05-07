@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 import { collection, doc, onSnapshot, orderBy, query } from 'firebase/firestore'
 import { db } from '@/firebase'
 import Comment from '@/components/Comment'
+import { AnimatePresence } from 'framer-motion'
 
 
 export default function PostPage({newsResults, randomUsersResults}) {
@@ -44,11 +45,15 @@ export default function PostPage({newsResults, randomUsersResults}) {
 			{
 				comment.length > 0 && (
 					<div className=''>
-						{
-							comment.map((com)=> (
-								<Comment key={com?.id} commentId={com?.id} oPostId={id} comment={com?.data()} />
-							))
-						}
+						<AnimatePresence>
+							{
+								comment.map((com)=> (
+									<motion.div key={post.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 1 }}>
+										<Comment key={com?.id} commentId={com?.id} oPostId={id} comment={com?.data()} />
+									</motion.div>
+								))
+							}
+						</AnimatePresence>
 					</div>
 				)
 			}

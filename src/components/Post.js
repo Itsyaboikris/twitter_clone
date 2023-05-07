@@ -26,7 +26,7 @@ export default function Post({post, id}) {
         const unsubscribe = onSnapshot(
 			collection(db, "posts", id, "comments"), (snapshot) => setComments(snapshot.docs)
 		)
-	},[comments])
+	},[comments, id])
 
 	useEffect(() => {
         const unsubscribe = onSnapshot(
@@ -36,7 +36,7 @@ export default function Post({post, id}) {
 
 	useEffect(() => {
 		setHasLiked(likes.findIndex((like) => like.id === session?.user.uid) !== -1)
-	},[likes])
+	},[likes,session?.user.uid])
 
 	const likePost = async() => {
 		if (session) {
